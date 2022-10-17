@@ -1,0 +1,7 @@
+﻿.imageButton {
+    transition: 0.2s all;
+}
+
+    .imageButton:active {
+        transform: scale(0.95);
+    }

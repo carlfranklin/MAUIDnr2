@@ -1,0 +1,38 @@
+﻿@page "/"
+
+<h3>.NET Rocks! Podcast Client</h3>
+
+<div>
+    <span>Filter: </span><input @bind="@EpisodeFilter" style="width:50%;" />
+    <button class="btn btn-danger" @onclick="ResetFilter">Reset</button>
+    <button class="btn btn-primary" @onclick="NavigateToPlayListPage">@PlayListButtonText</button>
+</div>
+
+<hr size=7 />
+
+@foreach (var show in AllShows)
+{
+    <h4>@show.ShowTitle</h4>
+    <span style="font-weight:bold;">
+        Episode @show.ShowNumber published @show.DatePublished.ToLongDateString()
+    </span>
+
+    <div>
+        @show.Description;
+    </div>
+    <br />
+    <button class="btn btn-primary"
+        @onclick="() => NavigateToDetailPage(show.ShowNumber)">
+        Episode Details
+    </button>
+    <hr />
+}
+@if (AllShows.Count > 0)
+{
+    <button class="btn btn-primary"
+        @onclick="GetNextBatchOfShows">
+        Load More Shows
+    </button>
+}
+<br />
+<br />

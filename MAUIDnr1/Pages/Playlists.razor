@@ -1,0 +1,63 @@
+﻿@page "/playlists"
+
+<div>
+    <span @onclick="NavigateHome" class="oi oi-arrow-left"
+          style="zoom:2;" aria-hidden="true"></span>
+</div>
+
+<h3>Manage Playlists</h3>
+
+@if (Globals.SelectedPlayList != null)
+{
+    <h4>Current PlayList: @Globals.SelectedPlayList.Name</h4>
+}
+<br />
+
+@if (Globals.PlayLists.Count > 0)
+{
+    <h4>Playlists:</h4>
+    <select class="form-control" @onchange="PlayListSelected" @onclick="PlayListsClicked" style="width:100%;">
+        @foreach (var playList in Globals.PlayLists)
+        {
+            if (Globals.SelectedPlayList != null && @playList == Globals.SelectedPlayList)
+            {
+                <option selected value="@playList.Id">@playList.Name</option>
+            }
+            else
+            {
+                <option value="@playList.Id">@playList.Name</option>
+            }
+        }
+    </select>
+    <br />
+    <br />
+}
+<div>
+    <button disabled="@CommandButtonsDisabled" class="btn btn-primary" @onclick="AddButtonClicked">Add</button>
+    @if (Globals.SelectedPlayList != null)
+    {
+        <span>&nbsp;</span>
+        <button disabled="@CommandButtonsDisabled" class="btn btn-primary" @onclick="EditButtonClicked">Edit</button>
+        <span>&nbsp;</span>
+        <button disabled="@CommandButtonsDisabled" class="btn btn-danger" @onclick="DeleteButtonClicked">Delete</button>
+    }
+</div>
+<br/>
+
+@if (PlaylistEditAction != PlaylistEditAction.None)
+{
+    <EditForm Model="PlayListToAddOrEdit" OnValidSubmit="SubmitPlayListClicked">
+        <DataAnnotationsValidator/>
+
+        Name:
+        <br/>
+        <InputText id="InputName" @bind-Value="@PlayListToAddOrEdit.Name" />
+        <br />
+        <br />
+        <button class="btn btn-primary" type="submit">Submit</button>
+        <span>&nbsp;</span>
+        <button @onclick="CancelButtonPressed" class="btn btn-secondary" type="button">Cancel</button>
+
+        <ValidationSummary />
+    </EditForm>
+}
