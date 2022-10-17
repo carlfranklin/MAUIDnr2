@@ -740,6 +740,7 @@ protected async Task AddButtonClicked()
     // Create a new PlayList
     PlayListToAddOrEdit = new PlayList();
     PlayListToAddOrEdit.Id = PlayList.CreateGuid(); // don't forget this!
+    PlayListToAddOrEdit.DateCreated = DateTime.Now;
     PlaylistEditAction = PlaylistEditAction.Adding;
     await JSRuntime.InvokeVoidAsync("SetFocus", "InputName");
 }
