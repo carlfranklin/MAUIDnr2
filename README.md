@@ -12,6 +12,8 @@ This type of app is called a Mobile Hybrid app. Yes, we're using Blazor, a web U
 
 - https://github.com/carlfranklin/MAUIDnr1 (Episode 28)
 - https://github.com/carlfranklin/MAUIDnr2 (Episode 30)
+- https://github.com/carlfranklin/MAUIDnr3 (Episode 31)
+- https://github.com/carlfranklin/MAUIDnr4 (Episode 33)
 
 ### Prerequisites
 
