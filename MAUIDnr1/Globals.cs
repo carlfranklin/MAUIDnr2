@@ -1,22 +1,11 @@
-﻿#if WINDOWS
-using Microsoft.UI;
-using Microsoft.UI.Windowing;
-using Windows.Graphics;
-#endif
-
-using Newtonsoft.Json;
+﻿using Newtonsoft.Json;
 using System.Collections.ObjectModel;
 
 public static class Globals
 {
-    public static readonly int WindowWidth = 900;
-    public static readonly int WindowHeight = 600;
-#if WINDOWS
-    public static Microsoft.UI.Windowing.AppWindow AppWindow {get;set;}
-#endif
-
     // list of all playlists
-    public static ObservableCollection<PlayList> PlayLists { get; set; } = new ObservableCollection<PlayList>();
+    public static ObservableCollection<PlayList> PlayLists { get; set; }
+        = new ObservableCollection<PlayList>();
 
     // currently selected playlist
     public static PlayList SelectedPlayList { get; set; }

@@ -1,8 +1,7 @@
-﻿namespace MAUIDnr1.Models
+﻿namespace MAUIDnr1.Models;
+
+public class GetByShowNumbersRequest
 {
-    public class GetByShowNumbersRequest
-    {
-        public string ShowName { get; set; }
-        public List<int> Indexes { get; set; }
-    }
+    public string ShowName { get; set; }
+    public List<int> Indexes { get; set; }
 }

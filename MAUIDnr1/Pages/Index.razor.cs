@@ -1,20 +1,33 @@
-﻿using Microsoft.JSInterop;
-using System.Collections.ObjectModel;
+﻿using System.Collections.ObjectModel;
 namespace MAUIDnr1.Pages;
 public partial class Index : ComponentBase
 {
-    
-    [Inject]
-    protected NavigationManager _navigationManager { get; set; }
-
     [Inject]
     protected ApiService _apiService { get; set; }
-
-    public ObservableCollection<Show> AllShows { get; set; } = new ObservableCollection<Show>();
+    [Inject]
+    protected NavigationManager _navigationManager { get; set; }
 
     protected List<int> ShowNumbers { get; set; } = new List<int>();
     protected int RecordsToRead { get; set; } = 20;
     protected int LastShowNumber { get; set; }
+
+    public string PlayListButtonText
+    {
+        get
+        {
+            string value = "Playlists";
+            if (Globals.SelectedPlayList != null)
+            {
+                value += $" ({Globals.SelectedPlayList.Name})";
+            }
+            return value;
+        }
+    }
+
+    public void NavigateToPlayListPage()
+    {
+        _navigationManager.NavigateTo("playlists");
+    }
 
     private string episodeFilter = "";
     public string EpisodeFilter
@@ -37,16 +50,13 @@ public partial class Index : ComponentBase
         }
     }
 
-    public string PlayListButtonText
+    public async Task GetNextBatchOfFilteredShows()
     {
-        get
+        var nextBatch = await _apiService.GetFilteredShows(EpisodeFilter, AllShows.Count, RecordsToRead);
+        if (nextBatch == null || nextBatch.Count == 0) return;
+        foreach (var show in nextBatch)
         {
-            string value = "Playlists";
-            if (Globals.SelectedPlayList != null)
-            {
-                value += $" ({Globals.SelectedPlayList.Name})";
-            }
-            return value;
+            AllShows.Add(show);
         }
     }
 
@@ -55,17 +65,6 @@ public partial class Index : ComponentBase
         ShowNumbers.Clear();
         AllShows.Clear();
         EpisodeFilter = "";
-    }
-
-    public async Task GetNextBatchOfFilteredShows()
-    {
-        var nextBatch = await
-            _apiService.GetFilteredShows(EpisodeFilter, AllShows.Count, RecordsToRead);
-        if (nextBatch == null || nextBatch.Count == 0) return;
-        foreach (var show in nextBatch)
-        {
-            AllShows.Add(show);
-        }
     }
 
     public async Task GetNextBatchOfShows()
@@ -107,9 +106,15 @@ public partial class Index : ComponentBase
         _navigationManager.NavigateTo(url);
     }
 
-    public void NavigateToPlayListPage()
+
+    private ObservableCollection<Show> allShows = new ObservableCollection<Show>();
+    public ObservableCollection<Show> AllShows
     {
-        _navigationManager.NavigateTo("playlists");
+        get => allShows;
+        set
+        {
+            allShows = value;
+        }
     }
 
     protected override async Task OnInitializedAsync()
@@ -117,4 +122,5 @@ public partial class Index : ComponentBase
         Globals.LoadPlaylists();
         await GetNextBatchOfShows();
     }
+
 }

@@ -1,9 +1,8 @@
-﻿namespace MAUIDnr1.Models
+﻿namespace MAUIDnr1.Models;
+
+public enum PlaylistEditAction
 {
-    public enum PlaylistEditAction
-    {
-        None,
-        Adding,
-        Editing
-    }
+    None,
+    Adding,
+    Editing
 }

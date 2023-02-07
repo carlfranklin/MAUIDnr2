@@ -50,7 +50,7 @@ protected override async Task OnInitializedAsync()
 
 ##### Show Guests
 
-Add the following Razor markup to *Details.razor* just below line 42: `<div> @AudioMessage @PlayPosition</div>`:
+Add the following Razor markup to *Details.razor* just below line 43: `<div> @AudioMessage @PlayPosition</div>`:
 
 ```c#
 <br/>
@@ -90,29 +90,17 @@ Run the App (F5) and select a show to see the details:
 
 In this module we will begin the playlist functionality, but we will only go as far as to manage the playlists. We will implement the playlists in another episode.
 
-Replace *Globals.cs* with the following:
+**Add a new class file, *Globals.cs* to the project**:
 
 ```c#
-#if WINDOWS
-using Microsoft.UI;
-using Microsoft.UI.Windowing;
-using Windows.Graphics;
-#endif
-
 using Newtonsoft.Json;
 using System.Collections.ObjectModel;
 
 public static class Globals
 {
-    public static readonly int WindowWidth = 900;
-    public static readonly int WindowHeight = 600;
-#if WINDOWS
-    public static Microsoft.UI.Windowing.AppWindow AppWindow {get;set;}
-#endif
-
     // list of all playlists
     public static ObservableCollection<PlayList> PlayLists { get; set; }
-    	= new ObservableCollection<PlayList>();
+        = new ObservableCollection<PlayList>();
 
     // currently selected playlist
     public static PlayList SelectedPlayList { get; set; }
@@ -151,9 +139,9 @@ public static class Globals
 }
 ```
 
-I've added a static `ObservableCollection<PlayList>`  called `Playlists`, which will contain all the playlists. 
+Globals contains a static `ObservableCollection<PlayList>`  called `Playlists`, which will contain all the playlists. 
 
-I've also added methods to load and save the playlists in the cache folder.
+I've also included methods to load and save the playlists in the cache folder.
 
 Add a new Razor Component to the *Pages* folder:
 
@@ -165,25 +153,22 @@ Add a new Razor Component to the *Pages* folder:
 <h3>Manage Playlists</h3>
 
 <span @onclick="NavigateHome" class="oi oi-arrow-left"
-      style="zoom:2;" aria-hidden="true"></span>
+      style="zoom:2;cursor:pointer;" aria-hidden="true"></span>
 ```
 
 Add a code-behind file *Playlists.razor.cs* to the *Pages* folder:
 
 ```c#
-using Microsoft.AspNetCore.Components;
+namespace MAUIDnr1.Pages;
 
-namespace MAUIDnr1.Pages
+public partial class Playlists : ComponentBase
 {
-    public partial class Playlists : ComponentBase
-    {
-        [Inject]
-        protected NavigationManager _navigationManager { get; set; }
+    [Inject]
+    protected NavigationManager _navigationManager { get; set; }
 
-        protected void NavigateHome()
-        {
-            _navigationManager.NavigateTo("/");
-        }
+    protected void NavigateHome()
+    {
+        _navigationManager.NavigateTo("/");
     }
 }
 ```
@@ -230,14 +215,13 @@ To the *Models* folder, add the following class file:
 *PlaylistEditAction.cs*:
 
 ```c#
-namespace MAUIDnr1.Models
+namespace MAUIDnr1.Models;
+
+public enum PlaylistEditAction
 {
-    public enum PlaylistEditAction
-    {
-        None,
-        Adding,
-        Editing
-    }
+    None,
+    Adding,
+    Editing
 }
 ```
 
@@ -248,36 +232,35 @@ Replace *Models/Playlist.cs* with the following:
 ```c#
 using System.ComponentModel.DataAnnotations;
 
-namespace MAUIDnr1.Models
+namespace MAUIDnr1.Models;
+
+public class PlayList : ICloneable
 {
-    public class PlayList :ICloneable
+    public Guid Id { get; set; }
+
+    [Required]
+    public string Name { get; set; } = "";
+    public DateTime DateCreated { get; set; }
+    public List<Show> Shows { get; set; } = new List<Show>();
+
+    public static Guid CreateGuid()
     {
-        public Guid Id { get; set; }
-        
-        [Required]  
-        public string Name { get; set; } = "";
-        public DateTime DateCreated { get; set; }
-        public List<Show> Shows { get; set; } = new List<Show>();
+        var obj = new object();
+        var rnd = new Random(obj.GetHashCode());
+        var bytes = new byte[16];
+        rnd.NextBytes(bytes);
+        return new Guid(bytes);
+    }
 
-        public static Guid CreateGuid()
+    public object Clone()
+    {
+        return new PlayList()
         {
-            var obj = new object();
-            var rnd = new Random(obj.GetHashCode());
-            var bytes = new byte[16];
-            rnd.NextBytes(bytes);
-            return new Guid(bytes);
-        }
-
-        public object Clone()
-        {
-            return new PlayList()
-            {
-                Id = this.Id,
-                Name = this.Name,
-                DateCreated = this.DateCreated,
-                Shows = this.Shows
-            };
-        }
+            Id = this.Id,
+            Name = this.Name,
+            DateCreated = this.DateCreated,
+            Shows = this.Shows
+        };
     }
 }
 ```
@@ -287,123 +270,120 @@ Besides `ICloneable`, I've added a static method to create a `Guid`, and specifi
 Replace *Pages/Playlists.razor.cs* with the following:
 
 ```c#
-using Microsoft.AspNetCore.Components;
+namespace MAUIDnr1.Pages;
 
-namespace MAUIDnr1.Pages
+public partial class Playlists : ComponentBase
 {
-    public partial class Playlists : ComponentBase
+    [Inject]
+    protected NavigationManager _navigationManager { get; set; }
+
+    // Are we adding, editing, or neither?
+    protected PlaylistEditAction PlaylistEditAction { get; set; }
+
+    // Used to disable the command buttons if we're adding or editing
+    protected bool CommandButtonsDisabled =>
+        (PlaylistEditAction != PlaylistEditAction.None);
+
+    // This is the PlayList object we use to add or edit
+    protected PlayList PlayListToAddOrEdit;
+
+    /// <summary>
+    /// Go back
+    /// </summary>
+    protected void NavigateHome()
     {
-        [Inject]
-        protected NavigationManager _navigationManager { get; set; }
+        _navigationManager.NavigateTo("/");
+    }
 
-        // Are we adding, editing, or neither?
-        protected PlaylistEditAction PlaylistEditAction { get; set; }
+    /// <summary>
+    /// Set the selected playlist when selected from the <select> element
+    /// </summary>
+    /// <param name="args"></param>
+    protected void PlayListSelected(ChangeEventArgs args)
+    {
+        Globals.SelectedPlayList = (from x in Globals.PlayLists
+                                    where x.Id.ToString() == args.Value.ToString()
+                                    select x).FirstOrDefault();
+    }
 
-        // Used to disable the command buttons if we're adding or editing
-        protected bool CommandButtonsDisabled => 
-            (PlaylistEditAction != PlaylistEditAction.None);
-
-        // This is the PlayList object we use to add or edit
-        protected PlayList PlayListToAddOrEdit;
-
-        /// <summary>
-        /// Go back
-        /// </summary>
-        protected void NavigateHome()
+    /// <summary>
+    /// Because PlayListSelected won't fire when there is only one item in the list
+    /// </summary>
+    protected void PlayListsClicked()
+    {
+        if (Globals.PlayLists.Count == 1)
         {
-            _navigationManager.NavigateTo("/");
+            Globals.SelectedPlayList = Globals.PlayLists.First();
         }
+    }
 
-        /// <summary>
-        /// Set the selected playlist when selected from the <select> element
-        /// </summary>
-        /// <param name="args"></param>
-        protected void PlayListSelected(ChangeEventArgs args)
-        {
-            Globals.SelectedPlayList = (from x in Globals.PlayLists 
-                                        where x.Id.ToString() == args.Value.ToString()
-                                        select x).FirstOrDefault();
-        }
+    /// <summary>
+    /// Add a PlayList
+    /// </summary>
+    protected void AddButtonClicked()
+    {
+        // Create a new PlayList
+        PlayListToAddOrEdit = new PlayList();
+        PlayListToAddOrEdit.Id = PlayList.CreateGuid(); // don't forget this!
+        PlayListToAddOrEdit.DateCreated = DateTime.Now;
+        PlaylistEditAction = PlaylistEditAction.Adding;
+    }
 
-        /// <summary>
-        /// Because PlayListSelected won't fire when there is only one item in the list
-        /// </summary>
-        protected void PlayListsClicked()
-        {
-            if (Globals.PlayLists.Count == 1)
-            {
-                Globals.SelectedPlayList = Globals.PlayLists.First();
-            }
-        }
+    /// <summary>
+    /// Edit the SelectedPlayList
+    /// </summary>
+    protected void EditButtonClicked()
+    {
+        // Clone it, so we don't clobber it accidentally.
+        PlayListToAddOrEdit = (PlayList)Globals.SelectedPlayList.Clone();
+        PlaylistEditAction = PlaylistEditAction.Editing;
+    }
 
-        /// <summary>
-        /// Add a PlayList
-        /// </summary>
-        protected void AddButtonClicked()
-        {
-            // Create a new PlayList
-            PlayListToAddOrEdit = new PlayList();
-            PlayListToAddOrEdit.Id = PlayList.CreateGuid(); // don't forget this!
-            PlayListToAddOrEdit.DateCreated = DateTime.Now;
-            PlaylistEditAction = PlaylistEditAction.Adding;
-        }
+    /// <summary>
+    /// Easy Peasy
+    /// </summary>
+    protected void DeleteButtonClicked()
+    {
+        Globals.PlayLists.Remove(Globals.SelectedPlayList);
+        Globals.SavePlaylists();
+        Globals.SelectedPlayList = null;
+        PlaylistEditAction = PlaylistEditAction.None;
+    }
 
-        /// <summary>
-        /// Edit the SelectedPlayList
-        /// </summary>
-        protected void EditButtonClicked()
+    /// <summary>
+    /// Commit the Add or Edit action
+    /// </summary>
+    protected void SubmitPlayListClicked()
+    {
+        if (PlaylistEditAction == PlaylistEditAction.Adding)
         {
-            // Clone it, so we don't clobber it accidentally.
-            PlayListToAddOrEdit = (PlayList)Globals.SelectedPlayList.Clone();
-            PlaylistEditAction = PlaylistEditAction.Editing;
+            // Simply add the new PlayList.
+            Globals.PlayLists.Add(PlayListToAddOrEdit);
+            // Select it
+            int index = Globals.PlayLists.IndexOf(PlayListToAddOrEdit);
+            Globals.SelectedPlayList = Globals.PlayLists[index];
         }
+        else if (PlaylistEditAction == PlaylistEditAction.Editing)
+        {
+            // Get the index of the selected play list
+            int index = Globals.PlayLists.IndexOf(Globals.SelectedPlayList);
+            // Replace it in the list
+            Globals.PlayLists[index] = PlayListToAddOrEdit;
+            // Get the new object reference
+            Globals.SelectedPlayList = Globals.PlayLists[index];
+        }
+        // Save the data!
+        Globals.SavePlaylists();
+        PlaylistEditAction = PlaylistEditAction.None;
+    }
 
-        /// <summary>
-        /// Easy Peasy
-        /// </summary>
-        protected void DeleteButtonClicked()
-        {
-            Globals.PlayLists.Remove(Globals.SelectedPlayList);
-            Globals.SavePlaylists();
-            Globals.SelectedPlayList = null;
-            PlaylistEditAction = PlaylistEditAction.None;
-        }
-
-        /// <summary>
-        /// Commit the Add or Edit action
-        /// </summary>
-        protected void SubmitPlayListClicked()
-        {
-            if (PlaylistEditAction == PlaylistEditAction.Adding)
-            {
-                // Simply add the new PlayList.
-                Globals.PlayLists.Add(PlayListToAddOrEdit);
-                // Select it
-                int index = Globals.PlayLists.IndexOf(PlayListToAddOrEdit);
-                Globals.SelectedPlayList = Globals.PlayLists[index];
-            }
-            else if (PlaylistEditAction == PlaylistEditAction.Editing)
-            {
-                // Get the index of the selected play list
-                int index = Globals.PlayLists.IndexOf(Globals.SelectedPlayList);
-                // Replace it in the list
-                Globals.PlayLists[index] = PlayListToAddOrEdit;
-                // Get the new object reference
-                Globals.SelectedPlayList = Globals.PlayLists[index];
-            }
-            // Save the data!
-            Globals.SavePlaylists();
-            PlaylistEditAction = PlaylistEditAction.None;
-        }
-
-        /// <summary>
-        /// Easy Peasy
-        /// </summary>
-        protected void CancelButtonPressed()
-        {
-            PlayListToAddOrEdit = null;
-            PlaylistEditAction = PlaylistEditAction.None;
-        }
+    /// <summary>
+    /// Easy Peasy
+    /// </summary>
+    protected void CancelButtonPressed()
+    {
+        PlayListToAddOrEdit = null;
+        PlaylistEditAction = PlaylistEditAction.None;
     }
 }
 ```
@@ -415,7 +395,7 @@ Replace *Pages/Playlists.razor* with the following:
 
 <div>
     <span @onclick="NavigateHome" class="oi oi-arrow-left"
-          style="zoom:2;" aria-hidden="true"></span>
+          style="zoom:2;cursor:pointer;" aria-hidden="true"></span>
 </div>
 
 <h3>Manage Playlists</h3>
@@ -761,22 +741,22 @@ protected async Task EditButtonClicked()
 
 Notice that we have referred to the `<InputText>` element as having the id "InputName". Let's add that.
 
-Change line 64 in *Playlists.razor* to the following:
+Change line 65 in *Playlists.razor* to the following:
 
 ```xml
-<InputText id="TextName" @bind-Value="@PlayListToAddOrEdit.Name" />
+<InputText id="InputName" @bind-Value="@PlayListToAddOrEdit.Name" />
 ```
 
 Now we need an `IJSRuntime`.
 
-Add this code at line 11:
+Add this code to *Playlist.razor.cs* at line 10:
 
 ```c#
 [Inject]
 protected IJSRuntime JSRuntime { get; set; }
 ```
 
-Now, let's look at lines 59 and 60:
+Now, let's look at lines 62 and 63:
 
 ```c#
 PlaylistEditAction = PlaylistEditAction.Adding;
@@ -1122,7 +1102,7 @@ Replace *Pages/Details.razor* with the following:
 @page "/details/{ShowNumber}"
 
 <span @onclick="NavigateHome" class="oi oi-arrow-left"
-      style="zoom:2;" aria-hidden="true"></span>
+      style="zoom:2;cursor:pointer;" aria-hidden="true"></span>
 
 @if (ThisShow != null)
 {

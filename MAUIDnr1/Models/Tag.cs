@@ -1,9 +1,8 @@
-﻿namespace MAUIDnr1.Models
+﻿namespace MAUIDnr1.Models;
+
+public class Tag
 {
-    public class Tag
-    {
-        public int Id { get; set; }
-        public string Text { get; set; } = "";
-        public string LastError { get; set; } = "";
-    }
+    public int Id { get; set; }
+    public string Text { get; set; } = "";
+    public string LastError { get; set; } = "";
 }

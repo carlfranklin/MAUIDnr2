@@ -1,7 +1,7 @@
 ﻿@page "/details/{ShowNumber}"
 
 <span @onclick="NavigateHome" class="oi oi-arrow-left"
-      style="zoom:2;" aria-hidden="true"></span>
+      style="zoom:2;cursor:pointer;" aria-hidden="true"></span>
 
 @if (ThisShow != null)
 {
@@ -41,12 +41,12 @@
     <br />
     <div> @AudioMessage @PlayPosition</div>
 
-    <br/>
+    <br />
     @foreach (var guest in ThisShow.ShowDetails.Guests)
     {
         <h3>@guest.Name</h3>
         <div style="padding:20px;">
-            <img src="@guest.PhotoUrl" style="width:160px;padding-right:10px;padding-bottom:10px;float:left;"/>
+            <img src="@guest.PhotoUrl" style="width:160px;padding-right:10px;padding-bottom:10px;float:left;" />
             <div>@guest.Bio</div>
         </div>
         <br clear="left" />
@@ -54,11 +54,11 @@
 
     <h3>Links:</h3>
     <div style="padding-left:20px;">
-    @foreach (var link in ThisShow.ShowDetails.Links)
-    {
-        <a style="padding-bottom:10px;" target="_blank" href="@link.Url">@link.Text</a>
-        <br/>
-    }
+        @foreach (var link in ThisShow.ShowDetails.Links)
+        {
+            <a style="padding-bottom:10px;" target="_blank" href="@link.Url">@link.Text</a>
+            <br />
+        }
     </div>
     <br />
 

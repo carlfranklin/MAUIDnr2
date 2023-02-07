@@ -1,29 +1,22 @@
-﻿#if WINDOWS
-using Microsoft.UI;
-using Microsoft.UI.Windowing;
-using Windows.Graphics;
-#endif
-
-namespace MAUIDnr1;
+﻿namespace MAUIDnr1;
 
 public partial class App : Application
 {
-    public App()
+	public App()
+	{
+		InitializeComponent();
+
+		MainPage = new MainPage();
+	}
+
+    protected override Window CreateWindow(IActivationState activationState)
     {
-        InitializeComponent();
-
-        Microsoft.Maui.Handlers.WindowHandler.Mapper.AppendToMapping(nameof(IWindow), (handler, view) =>
-        {
+        var window = base.CreateWindow(activationState);
 #if WINDOWS
-            var mauiWindow = handler.VirtualView;
-            var nativeWindow = handler.PlatformView;
-            nativeWindow.Activate();
-            IntPtr windowHandle = WinRT.Interop.WindowNative.GetWindowHandle(nativeWindow);
-            WindowId windowId = Microsoft.UI.Win32Interop.GetWindowIdFromWindow(windowHandle);
-            Globals.AppWindow = Microsoft.UI.Windowing.AppWindow.GetFromWindowId(windowId);
+        // from https://learn.microsoft.com/en-us/dotnet/maui/fundamentals/windows?view=net-maui-7.0
+		window.Width = 1280;
+		window.Height= 720;
 #endif
-        });
-
-        MainPage = new MainPage();
+        return window;
     }
 }
